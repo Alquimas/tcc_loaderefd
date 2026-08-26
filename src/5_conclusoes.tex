@@ -1,0 +1,85 @@
+\section{CONCLUSÕES E TRABALHOS FUTUROS}
+\label{sec:conclusao}
+O presente trabalho teve como objetivo central conceber e validar uma
+arquitetura de \textit{pipeline} de ingestão de dados orientada a metadados,
+voltada para a extração, transformação e carga de arquivos fiscais,
+especificamente a EFD ICMS IPI. A motivação para o
+desenvolvimento desta solução fundamentou-se na rigidez dos sistemas
+tradicionais, que frequentemente exigem refatoração de código-fonte a cada nova
+atualização normativa do fisco.
+
+Os resultados obtidos ao longo das etapas de homologação confirmam que a
+hipótese arquitetural proposta é tecnicamente viável e altamente vantajosa.
+A adoção de um modelo de metadados, baseado em arquivos JSON, permitiu
+desacoplar as regras de negócio da lógica de extração, apesar da necessidade de
+extração manual dessas regras de negócios a partir dos documentos oficiais.
+
+Adicionalmente, as técnicas de validação utilizadas, mesmo que ainda
+embrionárias, atestaram a integridade do processo. A precisão verificada na
+remontagem dos arquivos brutos, a partir dos dados em memória e do banco de
+dados relacional, assegura que o \textit{pipeline} cumpre o rigor exigido por
+sistemas de natureza fiscal, garantindo zero perda informacional. Contudo,
+é válido salientar que essa ainda não é uma abordagem ideal, muito menos
+escalável. A natureza \textit{ad-hoc} e manual da execução dos testes,
+além de demasiadamente custosa e propensa a erros, pode ser melhorada e
+explorada, buscando atender a métricas de cobertura de código, casos de teste de
+regressão que permitam testar melhorias de código e, principalmente,
+fornecer um modelo expansível e automatizado de execução dos mesmos.
+
+Além disso, o desenvolvimento expôs desafios significativos inerentes à
+engenharia de dados em larga escala. A identificação dos gargalos de paginação
+do tipo JSONB e a degradação temporal causada pela necessidade do
+\textit{PostgreSQL} de manter a consistência dos dados evidenciaram as
+limitações de ferramentas relacionais puras para armazenamento de formato
+bruto, bem como dos \textit{trade-offs} de modelagem. Contudo, a análise
+detalhada desses comportamentos imprevisíveis constitui uma contribuição
+acadêmica e técnica relevante deste trabalho, balizando o entendimento sobre
+escolhas arquiteturais e fundamentando as diretrizes para a evolução contínua
+da ferramenta.
+
+Em suma, o projeto atendeu de maneira satisfatória aos requisitos propostos,
+entregando um orquestrador resiliente, rastreável e flexível. A solução
+consolida uma base sólida que não apenas mitiga o esforço de manutenção de
+\textit{software} perante a volatilidade da legislação tributária brasileira,
+mas também habilita a transformação de dados opacos em informações estruturadas
+prontas para consumo analítico e a aplicação direta de uma ideia que pode ser
+expandida para outros sistemas de mesmo gênero.
+
+\subsection{Trabalhos Futuros}
+\label{sec:trabalhos_futuros}
+
+Considerando as limitações mapeadas durante a avaliação do protótipo e o vasto
+potencial de expansão da arquitetura estabelecida, sugerem-se as seguintes
+frentes de pesquisa e desenvolvimento para o aprimoramento da solução:
+
+\begin{itemize}
+    \item \textbf{Otimização do Motor de Persistência para Volumes Massivos:}
+    Tendo em vista que a saturação de desempenho está atrelada ao custo de
+    manutenção da consistência transacional do SGBD, sugere-se o desenvolvimento
+    de um pipeline otimizado de carga. Este estudo futuro envolveria a adoção de
+    \textit{tabelas de estagiamento}\footnote{Estruturas temporárias de
+    armazenamento usadas para receber dados brutos
+    rapidamente, minimizando o custo de restrições de integridade e atualização
+    de índices durante a carga inicial.} sem índices para a
+    recepção bruta dos registros EFD ICMS IPI via
+    \textit{bulk inserts}\footnote{Técnica de ingestão de dados que envia
+    grandes volumes de registros em um único lote ou comando para o SGBD,
+    reduzindo o custo computacional por linha inserida.},
+    seguida pela consolidação assíncrona e particionamento dos dados nas
+    tabelas finais do modelo relacional;
+
+    \item \textbf{Testes de Estresse e Escalabilidade Horizontal:} Executar
+    baterias de testes quantitativos com volumetria de produção em ambiente
+    distribuído, com o objetivo de traçar curvas de escalabilidade linear
+    do Orquestrador, avaliando o comportamento do gerenciamento concorrente
+    de \textit{workers} sob carga massiva e extrema;
+
+    \item \textbf{Utilização de \textit{parsing} e \textit{loading} baseado
+    em metadados em outros cenários:} Visando atestar a eficiência e
+    manutenibilidade dessa abordagem, é sugerido que se faça o uso da
+    mesma para outros formatos de documento em texto semiestruturado que
+    requiram a criação de um \textit{parsing} dedicado e que tenham alta
+    volatilidade. O objetivo aqui seria entender como essa abordagem pode ser
+    aplicada em outros casos e quais os níveis de sucesso e mudanças necessárias
+    a serem aplicadas;
+\end{itemize}

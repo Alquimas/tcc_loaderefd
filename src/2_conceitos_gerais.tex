@@ -1,0 +1,61 @@
+\section{Trabalhos relacionados}
+
+Esta seção apresenta uma revisão da literatura fundamentada em dois eixos
+centrais para o posicionamento deste trabalho: a adoção de \textit{pipelines}
+de ingestão adaptativos baseados em metadados e as soluções existentes para a
+gestão e armazenamento de documentos fiscais. A partir dessa análise,
+identificam-se as lacunas que justificam a
+arquitetura proposta nesta pesquisa.
+
+\subsection{\textit{Pipelines} de Ingestão de Dados Adaptativos}
+\label{sec:pipelines_adaptativos}
+
+A capacidade de se adaptar à evolução de esquemas é um dos principais
+motivadores para a adoção de arquiteturas de ingestão de dados orientadas por
+metadados. Chirumamilla (2024) aborda esse problema, ao
+demonstrar como esquemas abstratos centralizados em repositórios de metadados,
+permitem modificar modelos de dados, sem reescrever o código do
+\textit{pipeline} de integração. Enquanto Chirumamilla (2024) aplica essa
+elasticidade estrutural às mudanças em catálogos de produtos de comércio
+eletrônico e varejo, nossa pesquisa direciona essa mesma premissa para o
+cenário da escrituração fiscal.
+
+No Brasil, os arquivos da EFD ICMS IPI possuem leiautes em arquivos texto
+estruturados em árvore que sofrem revisões governamentais periódicas
+\cite{nota_tecnica_efd}. O \textit{pipeline} de ingestão aqui proposto inova
+ao utilizar esquemas JSON como contrato de metadados para interpretar, validar e
+extrair os registros da EFD ICMS IPI dinamicamente. Dessa forma, quando a
+legislação fiscal altera a estrutura de um bloco ou adiciona novos campos, a
+adaptação do sistema requer apenas a atualização do artefato de mapeamento JSON,
+conferindo alta manutenibilidade ao processamento de dados tributários.
+
+\subsection{Armazenamento de documentos fiscais}
+\label{sec:armazenamento_docs_fiscais}
+
+No contexto da automação fiscal e da modernização dos sistemas de suporte ao
+ecossistema do SPED, existem pesquisas que focam na descentralização e no ganho
+de resiliência arquitetural para lidar com o grande volume de obrigações
+tributárias. Nessa vertente, Tavares (2022) propõem uma
+arquitetura baseada em microsserviços e contêineres \textit{Docker} para a
+centralização, baixa e armazenamento de Notas Fiscais Eletrônicas (NF-e),
+advindas da Secretaria da Fazenda (SEFAZ). O trabalho foca em solucionar os
+gargalos operacionais da conferência manual e assegurar a guarda dos arquivos
+XML (Linguagem de Marcação Extendida, tradução livre do inglês
+\textit{Extensible Markup Language}) em um repositorio lógico de armazenamento
+na nuvem, isolando o consumo e os recursos computacionais de cada empresa, para
+prover alta disponibilidade e escalabilidade.
+
+Embora Tavares (2022) demonstre a viabilidade de arquiteturas escaláveis para a
+captura e preservação de documentos fiscais em nível de arquivo físico, a
+solução limita-se à camada de aquisição e guarda em nuvem de arquivos já bem
+estruturados em XML. A literatura ainda carece de abordagens robustas voltadas
+para a ingestão, interpretação e estruturação granular de obrigações acessórias
+textuais não tão bem estruturadas, como o EFD ICMS IPI. 
+
+Nesse sentido, o presente trabalho avança e complementa a linha de investigação
+de modernização contábil-tributária, ao propor um \textit{pipeline} de ingestão
+dinâmico e orientado a metadados. Enquanto soluções como a de
+\cite{tavares2022nfe} resolvem o problema do tráfego e do armazenamento bruto
+do documento, a arquitetura aqui proposta foca no processamento relacional de
+alta precisão, para assegurar a integridade dos dados em Bancos de Dados
+Relacionais \textit{PostgreSQL}.

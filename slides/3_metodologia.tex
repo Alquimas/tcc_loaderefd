@@ -1,0 +1,23 @@
+\section{Metodologia}
+
+\begin{frame}{Arquitetura da solução}
+\input{figuras/arquitetura_geral}
+\end{frame}
+
+\begin{frame}{O Parser}
+  \textbf{Responsável pela conversão do formato textual para uma representação intermediária:}
+  \begin{itemize}
+    \item Funciona por meio varredura sequencial, iterando linha a linha sobre o documento.
+    \item Utiliza descida recursiva para fazer a inserção dos registros na estrutura em memória.
+    \item Garante validade de cardinalidade e da quantia dos campos.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{O Loader}
+  \textbf{Responsável por orquestrar a inserção da representação intermediária no banco de dados:}
+  \begin{itemize}
+    \item \textbf{Varredura em profundidade:} A representação intermediária é varrida usando um algoritmo \textbf{DFS} recursivo.
+    \item \textbf{Uso de \textit{dispatcher}:} Ao encontrar um registro, se utiliza do campo ``colunas'' dos metadados para fazer o despache dinâmico do método que extrai as informações daquela coluna.
+    \item \textbf{Integridade primeiro:} Foco na consistência em detrimento da tolerância a falhas.
+  \end{itemize}
+\end{frame}

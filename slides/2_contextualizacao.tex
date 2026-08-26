@@ -1,0 +1,62 @@
+\section{Criação do Documento de Metadados}
+
+\begin{frame}[fragile]{Sintaxe de Arquivo EFD ICMS IPI}
+    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single, caption={Exemplo de documento EFD}, label={lst:efd_exemplo}]
+|0000|EMP|0|01012024|31012024|EMPRESA TESTE LTDA|12345678901234|12345678901|EM|EMPRESA TESTE |EMPRESA|EMPRESA TESTE LTDA|EMPRESA T|E|1|^CRLF
+|0001|0|^CRLF
+|0005|EMPRESA TESTE LTDA|EMPRESA |COMERCIAL ABC|EMPRESA TE|FULANO DE TAL|RUA DAS FLORES 123|EMPRESA TES|COMERCIAL A|COMERCIAL ABC|^CRLF
+|0100|COMERCIAL ABC|12345678901|EMPRESA TESTE L|12345678901234|COMERCIA|contribuinte|COMERCIAL |12345678901234567890|MARIA SANTOS|FULANO DE T|RUA DAS FLO|FULANO DE TAL|COMERCI|^CRLF
+|0990|6|^CRLF
+|B001|0|^CRLF
+|B020|99|100|SAO PAULO|CO|FU|COM|COMERCIAL|EMPRESA TESTE LTDA|01042024|FULANO|0,00|1,00|99,99|100,00|99,99|100,00|1234,11|0,01|999,99|PRODUTO A1|^CRLF
+    \end{lstlisting}
+    \fonte{Elaborado pelo autor (2026)}
+\end{frame}
+
+\begin{frame}{Sintaxe de Arquivo EFD ICMS IPI}
+\textbf{Essa sintaxe possui alguns empecilhos que o presente trabalho necessita lidar:}
+    \begin{itemize}
+        \item Ausência de uma representação oficial que seja legível por máquina.
+        \item Estrutura totalmente implícita.
+    \end{itemize}
+\textbf{A equipe então decidiu:}
+    \begin{itemize}
+        \item Fazer a tradução da representação oficial para JSON.
+        \item Determinar otimizações prévias que já poderiam ser realizadas para evitar custos de leitura. 
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{JSON de Regras de Metadados}
+    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single, caption={Modelo JSON de Regras de Metadados para a EFD ICMS IPI}, label={lst:json_metadados_1}]
+{
+    "nome_tabela": "",
+    "registro_principal": "",
+    "registros": [{
+        "caminho": "",
+        "ocorrencia": "",
+        "campos": [{
+                "nome_campo": "",
+                "tipo_dado": ""
+        }]
+    }],
+    ...
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{JSON de Regras de Metadados}
+    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single, label={lst:json_metadados_2}]
+    ...
+    "colunas": [{
+        "nome_coluna": "",
+        "tipo_dado": "",
+        "origem": "",
+        "extras": {
+            "caminho": "",
+            "nome_campo": ""
+        }
+    }],
+    "chave_primaria": []
+}
+    \end{lstlisting}
+    \fonte{Elaborado pelo autor (2026)}
+\end{frame}

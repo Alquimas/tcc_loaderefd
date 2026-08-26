@@ -1,0 +1,108 @@
+\section{INTRODUÇÃO}
+\label{sec:introduction}
+
+Estabelecido em 2007 com o Decreto n\(^\circ\) 6.022/2007 \cite{decreto_6022},
+o Sistema Público de Escrituração Digital, abreviado como SPED, é um sistema que
+busca modernizar a interação entre contribuintes e a administração tributária
+pública encarregada de regulamentar, arrecadar, fiscalizar e auditar a prestação
+de contas e o pagamento dos tributos, administração essa denominada ao longo
+desse documento como \textit{fisco}. O SPED executa essa modernização através da
+informatização das obrigações acessórias, bem como a utilização da certificação
+digital para garantir a validade jurídica dos documentos eletrônicos
+\cite{sped_modernizacao}. Um dos módulos desse sistema é a Escrituração Fiscal
+Digital de ICMS --- Imposto sobre Operações relativas à Circulação de
+Mercadorias e sobre Prestações de Serviços de Transporte Interestadual e
+Intermunicipal e de Comunicação --- e IPI --- Imposto sobre Produtos
+Industrializados ---, abreviada como EFD ICMS IPI, que opera por meio de um
+arquivo digital, cuja emissão é obrigatória para contribuintes desses impostos,
+contendo registros de apuração de impostos, documentos fiscais e outras
+informações de interesse da Secretaria da Receita Federal, dos fiscos estaduais
+e do Distrito Federal \cite{efd_icms_ipi}.
+
+O documento EFD ICMS IPI deve ser escriturado pelo contribuinte,
+validado se utilizando do programa especificado pelos fiscos das unidades
+federadas e pelo fisco federal, e submetido a programa validador, disponilizado
+em sítio digital do SPED, para validação de conteúdo, assinatura digital e
+transmissão \cite{guia_pratico_efd}. A responsabilidade pela governança
+e custódia desses dados recai diretamente sobre a Administração Tributária.
+Sob a égide do Decreto n\(^\circ\) 6.022/2007 \cite{decreto_6022}, o sistema
+é explicitamente definido em seu Artigo 2\(^\circ\) como ``\textit{[...]
+instrumento que unifica as atividades de recepção, validação, armazenamento e
+autenticação de livros e documentos que integram a escrituração contábil e
+fiscal dos empresários e das pessoas jurídicas, inclusive imunes ou isentas,
+mediante fluxo único, computadorizado, de informações.}''. Portanto, a
+manutenção íntegra e perpétua desse acervo digital configura um dever legal
+imperativo do Estado, essencial para o exercício pleno da fiscalização soberana.
+
+Além disso, no âmbito da Lei 5.172/1966 \cite{lei-5172}, em seu
+Artigo 150\(^\circ\), Parágrafo 4\(^\circ\), é explicitado que
+``\textit{Se a lei não fixar prazo a homologação, será êle de cinco anos, a
+contar da ocorrência do fato gerador; expirado êsse prazo sem que a Fazenda
+Pública se tenha pronunciado, considera-se homologado o lançamento e
+definitivamente extinto o crédito, salvo se comprovada a ocorrência de dolo,
+fraude ou simulação}'', sendo também reforçado pelo artigo 173\(^\circ\) desse
+mesmo decreto, que afirma ``\textit{O direito de a Fazenda Pública constituir o
+crédito tributário extingue-se após 5 (cinco) anos, contados: I --- do primeiro
+dia do exercício seguinte àquele em que o lançamento poderia ter sido efetuado;
+II --- da data em que se tornar definitiva a decisão que houver anulado, por
+vício formal, o lançamento anteriormente efetuado}'', de modo que além do
+armazenamento de tais documentos, é de interesse do fisco realizar auditorias
+sobre esses documentos em tempo hábil, para evitar fraudes fiscais e
+homologação involuntárias nos termos desses decretos, o que pode gerar
+prejuízos bilionários aos cofres públicos.
+
+Contudo, a efetivação dessas auditorias esbarra em diversos desafios de
+engenharia de software e processamento de dados. Os arquivos da EFD ICMS IPI
+são semiestruturados, apresentando uma limitação física de blocos, mas deixando
+de fora a hierarquia entre os registros. Essa hierarquia, bem como outras
+regras de formatação, formam o que é denomidado de \textit{leiaute}, o qual
+sofre atualizações frequentes por parte do fisco \cite{nota_tecnica_efd}.
+A ingestão desse volume massivo de dados semiestruturados para sistemas
+gerenciadores de bancos de dados (SGBD) relacionais --- utilizando abordagens
+tradicionais de código fixo --- resulta em alto custo de manutenção e
+dificuldades no mapeamento de entidades, como limitações na manipulação e de
+cruzamento nesses grandes volumes de dados.
+
+Com este cenário estabelecido, o presente trabalho se propõe a desenvolver um
+\textit{pipeline} de ingestão dinâmico e orientado a metadados para o
+processamento de arquivos EFD ICMS IPI. A solução busca abstrair as regras de
+extração do código-fonte, por meio de arquivos de configuração em formato JSON
+(Notação de Objetos do JavaScript, tradução livre do inglês
+\textit{JavaScript Object Notation}), permitindo que a infraestrutura do fisco
+processe e armazene os dados fiscais de forma confiável e resiliente às
+constantes mudanças de leiaute.
+
+\subsection{Objetivo geral}
+\label{sec:introduction_objetivo_geral}
+Desenvolver uma arquitetura de ingestão e processamento de dados orientada a
+metadados para arquivos EFD ICMS IPI, visando permitir o armazenamento
+estruturado e facilitar o cruzamento de dados fiscais.
+
+\subsection{Objetivos específicos}
+\label{sec:introduction_objetivos_especificos}
+Para que o objetivo geral seja alcançado, foram traçados os seguintes objetivos específicos:
+\begin{itemize}
+    \item Determinar, dentre as diversas regras especificadas na documentação
+    oficial \cite{guia_pratico_efd, nota_tecnica_efd}, quais são relevantes
+    para o nosso objetivo;
+    \item Mapear e estruturar as regras de negócio relevantes dos leiautes do
+    SPED Fiscal utilizando arquivos de metadados estruturado em JSON;
+    \item Implementar uma ferramenta que seja capaz de ler, extrair e atribuir
+    a estrutura do leiaute aos blocos de texto da EFD ICMS IPI de forma
+    dinâmica, \textit{i.e.}, sem dependência de código fixo;
+    \item Validação da integridade dos dados.
+\end{itemize}
+
+\subsection{Estrutura do relatório técnico}
+\label{sec:introduction_estrutura}
+
+Para uma melhor compreensão e fluidez da leitura, as próximas páginas se
+encontram divididas em um total de 5 seções, além das referências
+bibliográficas. A Seção 2 aborda trabalhos semelhantes ao presente. A Seção 3,
+por sua vez, detalha com mais riqueza o contexto do problema, usando isso como
+base para apresentar a solução elaborada. A Seção 4 expõe os resultados obtidos
+e faz uma análise de cada um deles, cobrindo tópicos específicos que foram
+considerados relevantes. A Seção 5 reúne as considerações finais, as
+contribuições da pesquisa e as sugestões para trabalhos futuros. Por fim, a
+Seção 6 apresenta a declaração formal sobre o uso de ferramentas de Inteligência
+Artificial ao longo da elaboração deste documento.

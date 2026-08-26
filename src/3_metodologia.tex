@@ -1,0 +1,331 @@
+\section{\textit{Pipeline} Baseado em Metadados}
+\label{sec:metodologia}
+
+Este capítulo detalha os procedimentos metodológicos adotados para o
+desenvolvimento da solução, abrangendo desde a sua concepção, planejamento e
+execução, até a contextualização do ambiente no qual o sistema está inserido.
+
+\subsection{EFD ICMS IPI e seu Modelo Semiestruturado}
+\label{sec:efd_modelo}
+
+O leiaute do arquivo EFD ICMS IPI é formalizado e disponibilizado por meio de
+Notas Técnicas \cite{nota_tecnica_efd} e do Guia Prático \cite{guia_pratico_efd}
+disponibilizados no sítio digital do SPED. Periodicamente eles são
+atualizados e formalizados, por meio de resoluções e atos normativos da Comissão
+Técnica Permanente do ICMS \cite{ato_cotepe_44}.
+
+A estrutura atual do EFD ICMS IPI é dividida em blocos \cite{nota_tecnica_efd},
+os quais subdividem-se em registros, que contêm campos específicos para a
+inserção dos dados. Em termos gerais, a macroestrutura de um arquivo EFD ICMS
+IPI obedece à seguinte sequência padronizada:
+
+\begin{itemize}
+    \item \textbf{Registro 0000:} Abertura do arquivo e identificação da entidade;
+    \item \textbf{Bloco 0:} Abertura, identificação e referências;
+    \item \textbf{Blocos B, C, D, E, G, H, K:} Dados e apurações fiscais;
+    \item \textbf{Bloco 1:} Informações adicionais e complementares;
+    \item \textbf{Bloco 9:} Controle e encerramento do arquivo;
+    \item \textbf{Registro 9999:} Encerramento do documento fiscal.
+\end{itemize}
+
+Adicionalmente, cada bloco possui seus próprios registros de abertura e
+fechamento, estabelecendo uma delimitação clara de escopo (\textit{e.g.}, o
+Bloco 0 inicia-se no Registro 0001 e finaliza-se no Registro 0990). A
+organização desses registros ocorre de forma hierárquica, viabilizando 
+aplicação do conceito de ``pai e filho'' à sintaxe do arquivo. A frequência de
+aparição de um registro é governada pelas regras de ocorrência (`1', `V', `1:N',
+`1:1'). No nível mais granular, os registros são decompostos em campos
+elementares \cite{nota_tecnica_efd}.
+
+Além da sintaxe abstrata, a Nota Técnica~\cite{nota_tecnica_efd} estabelece
+diretrizes físicas essenciais para o processamento computacional: codificação
+obrigatoriamente em ISO 8859-1 (Latin-1); estrutura de linhas de tamanho
+variável iniciadas na coluna 1; utilização do caractere \textit{pipe}
+(\texttt{|}, ASCII 124) como delimitador padrão; e encerramento de linhas
+demarcardo por \textit{Carriage Return} (CR, ASCII 13) e \textit{Line Feed}
+(LF, ASCII 10) \cite{nota_tecnica_efd}. Um exemplo desse formato pode ser
+visto no Quadro~\ref{qua:efd_exemplo}:
+
+\input{quadros/efd_exemplo}
+A compreensão desse formato de documento fiscal estabelece o modelo de dados
+formal sobre o qual se sustenta todo o processo de ingestão de dados deste
+trabalho.
+
+\subsection{Especificação Estruturada e Modelagem de Regras (Metadados)}
+\label{sec:especificacao_regras}
+
+Devido à ausência de uma definição legível por máquina oficial para a
+EFD ICMS IPI, a aplicação estrita da especificação técnica dependeria da
+extração de dados de arquivos em formato PDF (Formato de Documento Portátil,
+tradução livre do inglês \textit{Portable Document Format}).
+Um exemplo de Documento Fiscal Eletrônico (DF-e) que não possui esse problema
+é a Nota Fiscal Eletrônica, que mesmo estando em XML, possui uma especificação
+em XSD~\cite{schemas_nfe_2026} (Definição de \textit{schema} XML, tradução
+livre do inglês \textit{XML Schema Definition}), permitindo assim validar o
+formato semiestruturado do XML. A extração das regras em PDF de forma
+automatizada é propensa a falhas, visto que o documento original não possui
+estrutura fixa, gerando entraves para a transcrição do código e para a
+manutenção contínua das regras.
+
+Para evitar este problema, optou-se por transcrever as diretrizes para o formato
+JSON de forma manual, sob revisão por pares da equipe de desenvolvimento. Como
+o sistema consome arquivos EFD ICMS IPI já validados e aprovados pelos
+programas da SEFAZ, o escopo de implementação dispensou a verificação de regras
+fiscais. Assim, o mapeamento limitou-se aos requisitos estruturais estritamente
+necessários para realizar a tradução do formato textual para um formato que
+represente a estrutura de forma completa dentro do código, bem como a
+persistência dos dados.
+
+Uma vez garantida a extração e a estruturação correta dos dados em memória, o
+desafio subsequente consistiu em orquestrar a persistência dessa hierarquia no
+banco de dados relacional. Para evitar o engessamento do código no componente
+de carga, foi necessário que o modelo JSON fosse estendido para um contrato de
+mapeamento abrangente, incorporando ativamente as regras de inserção física, como ilustrado no Quadro~\ref{qua:json_metadados}:
+
+\input{quadros/json_metadados_1}
+\input{quadros/json_metadados_2}
+\input{quadros/json_metadados_3}
+\input{quadros/json_metadados_4}
+\input{quadros/json_metadados_5}
+
+Passou-se a definir não apenas só a estrutura interna da EFD ICMS IPI e o
+relacionamento entre seus registros e as tabelas relacionais do
+banco de dados, mas também estratégias de desnormalização --- isso é, quais
+registros hierárquicos poderiam ser fundidos em uma única tabela
+--- e inserção --- indicando, por exemplo, quais dados compõem determinada
+coluna de cada tabela.
+
+Essa abordagem otimiza o modelo de dados, mitigando
+operações de \textit{INNER JOIN} durante a leitura analítica das
+informações, o que reduz o consumo de E/S e índices ao buscar informações que
+já são intimamente relacionadas, acelerando consultas ao evitar junções. Além
+disso, estudar como o \textit{schema} do banco de dados será montado de antemão
+permite uma maior flexibilidade quanto a estruturação dos metadados. A
+estrutura final desse contrato, contendo todas as diretrizes requeridas para
+a realização da carga no estado atual.
+
+Em termos gerais, cada um dos campos cumpre o seguinte papel:
+\begin{itemize}
+    \item \textbf{nome\_tabela:} Representa o nome da tabela no
+    \textit{Datalake} cujo o presente objeto representa;
+    \item \textbf{registro\_principal:} Representa o registro principal dessa
+    tabela, representado através do caminho real do registro;
+    \item \textbf{registros:} Representa uma lista com os registros cujas
+    informações são armazenadas na presente tabela;
+    \begin{itemize}
+        \item \textbf{caminho:} Representa o nome do presente registro,
+        representado através do caminho relativo ao
+        \textit{registro\_principal}. Se vazio, indica que se trata do
+        registro principal da presente tabela;
+        \item \textbf{ocorrencia:} Representa o número de ocorrências do
+        presente registro em relação ao pai dele;
+        \item \textbf{campos:} Representa a lista de campos do registro atual,
+        através de seus nomes (\textit{nome\_campo}) e dos tipos de dados
+        esperados (\textit{tipo\_dado});
+    \end{itemize}
+    \item \textbf{colunas:} Representa uma lista com as colunas que fazem
+    parte da presente tabela;
+    \begin{itemize}
+        \item \textbf{nome\_coluna:} Representa o nome da presente coluna;
+        \item \textbf{tipo\_dado:} Representa o tipo de dado armazenado na
+        presente coluna;
+        \item \textbf{origem:} Representa a origem dos dados armazenados na
+        presente coluna. Pode ser um dos seguintes:
+        \begin{itemize}
+            \item \textbf{efd:} Representa que os dados armazenados na presente
+            coluna derivam diretamente da subárvore atual da EFD ICMS IPI;
+            \item \textbf{metadados:} Representa que os dados armazenados na
+            presente coluna derivam dos metadados do arquivo EFD ICMS IPI;
+            \item \textbf{serial:} Representa que os dados armazenados na
+            presente coluna derivam de sequencial interno ao banco de dados;
+            \item \textbf{externo:} Representa que os dados armazenados na
+            presente coluna derivam de uma consulta que devem ser realizado em
+            outra tabela do banco de dados;
+            \item \textbf{registro\_pai}: Representa que os dados armazenados
+            na presente coluna derivam da chave primária de um registro pai.
+        \end{itemize}
+        \item \textbf{extras:} Representa informações adicionais que possam ser
+        necessárias para obter os dados armazenados na presente coluna. Por
+        exemplo, se a \textbf{origem} é \textbf{efd}, teremos dois campos
+        adicionais, um que indica qual o caminho que deve ser seguido para
+        encontrar aquele o campo que contém a informação, e o nome desse campo;
+    \end{itemize} 
+    \item \textbf{chave\_primaria:} Representa a lista de colunas que compõe a
+    chave primária da tabela.
+\end{itemize}
+
+\subsection{Arquitetura da Solução de Ingestão de Dados}
+\label{sec:arquitetura_etl}
+
+A finalidade do projeto consiste no desenvolvimento de uma aplicação capaz de
+processar os arquivos brutos da EFD ICMS IPI, transformá-los em uma
+representação intermediária em memória e persisti-los em um banco de dados
+\textit{PostgreSQL}, tanto em formato JSON --- via \textit{JSON Binary}, ou
+apenas JSONB ---, quanto em esquema relacional normalizado. Vale ressaltar aqui
+que o foco do \textit{pipeline} não é a ingestão em tempo real de documentos
+EFD ICMS IPI, dado que tais arquivos são gerados
+mensalmente~\cite{perguntas_frequentes_efd},
+o que gera um espaço amplo para a ingestão dos mesmos antes das auditorias
+serem possíveis. A arquitetura geral do processo de ingestão projetado para
+este fim pode ser visualizada na Figura \ref{fig:arquitetura_geral}, e as
+quatro componentes arquiteturais principais serão detalhadas a seguir.
+
+\input{figuras/arquitetura_geral}
+
+\subsubsection{Orquestrador}
+O Orquestrador atua como o ponto de entrada do \textit{pipeline}. Sua função
+não é manipular os dados diretamente, mas sim coordenar o fluxo de trabalho,
+desde a localização dos arquivos, até a distribuição de tarefas. Acionado via
+interface de linha de comando, ele valida as regras JSON, diretórios e
+conexões, executando um ciclo de vida em cinco etapas operacionais:
+
+\begin{enumerate}
+    \item \textbf{Descoberta:} Varredura de diretórios para identificação de
+    arquivos aderentes ao padrão esperado.
+    \item \textbf{Filtragem de Estado:} Consulta ao \textit{log} de execuções
+    anteriores para isolar e remover arquivos já inseridos com sucesso.
+    \item \textbf{Divisão em Lotes (\textit{Batches}):} Agrupamento dos
+    arquivos pendentes em lotes de tamanho fixo, balanceando a carga de
+    processamento.
+    \item \textbf{Fila de processamento dos lotes via \textit{Workers}:} 
+    Os lotes criados na etapa anterior são atribuídos a \textit{Workers}
+    paralelos e independentes, que concorrem apenas pelo acesso ao banco e,
+    caso falhem, não afetarão os demais.
+    Esses \textit{Workers} são criados sobre demanda e, para melhor uso dos
+    recursos computacionais, o número de instâncias ativas ao mesmo tempo é
+    controlado por semáforos\footnote{Mecanismo de sincronização utilizado em
+    programação concorrente para limitar a quantidade de processos ou
+    \textit{threads} que acessam simultaneamente um recurso.}, sendo limitado
+    a um máximo pré-estabelecido ao início da execução do \textit{pipeline}.
+    Normalmente esse é um valor igual ou menor ao número de núcleos de
+    processamento disponíveis no momento.
+    \item \textbf{Finalização:} Geração de relatórios de estatísticas de
+    execução do \textit{pipeline} e garantia de encerramento seguro para evitar
+    vazamento de memória e conexões retidas.
+\end{enumerate}
+
+\subsubsection{\textit{Worker}}
+O \textit{Worker} é a unidade de processamento independente, que executa o
+\textit{pipeline} fim a fim para um lote específico. Em sua inicialização,
+estabelece uma conexão dedicada com o banco de dados. A partir disso, ele
+executa a ingestão de forma individual para cada arquivo, garantindo o
+isolamento de falhas. Ele primeiramente realiza a sanitização do arquivo
+(verificando corrupção ou ausência de dados) e depois submete o texto ao
+componente \textit{Parser}.
+
+Após obter a representação em árvore gerado pelo componente \textit{Parser},
+o \textit{Worker} inicia uma transação atômica no banco de dados para realizar
+a carga normalizada e a inserção no formato JSON. Estratégias de tratamento de
+erro segmentam as falhas operacionais: exceções a nível de arquivo são ignoradas
+e registradas sem interromper o lote, enquanto quedas de conexão forçam
+tentativas de reconexão antes de avançar o cursor.
+
+\subsubsection{\textit{Parser}}
+Este módulo representa o primeiro estágio do \textit{pipeline} de ingestão
+que lida diretamente com o formato de dados do ecossistema EFD ICMS IPI.
+Ele é responsável pela conversão do formato textual dos arquivos para uma
+representação intermediária em memória, organizando os registros fiscais em uma
+árvore de objetos categorizada por grupos (0, 1, B, C, D, E, G, H). Esta
+representação é responsável por alimentar todos os modos de persistência
+disponíveis no sistema.
+
+O processamento adota uma estratégia de varredura sequencial, iterando linha a
+linha sobre o arquivo passado como argumento. A cada linha não vazia, o
+algoritmo particiona o conteúdo pelo delimitador \textit{Pipe} (\texttt{`|'}),
+identifica o código do registro por meio do primeiro campo --- como visto no
+Quadro~\ref{qua:efd_exemplo} --- e, em seguida, consulta o JSON contendo
+os metadados para encontrar o seu caminho hierárquico dentro da estrutura, a sua
+cardinalidade de ocorrência e quais os campos esperados nesse registro.
+
+O mecanismo de inserção na estrutura em memória opera por descida recursiva
+para varrer o caminho hierárquico: para cada registro, consulta-se o percurso
+predefinido em seus metadados e, a cada segmento do caminho, cria-se um nó
+intermediário, caso este ainda não exista. A criação desses nós respeita a
+cardinalidade do registro ancestral --- associações do tipo um-para-um, para
+pais de ocorrência única, ou um-para-vários, para pais de ocorrência múltipla,
+utilizando uma lista para acumular as ocorrências. Ao final da travessia, o
+item é inserido no nó terminal, conforme sua própria cardinalidade: registros
+que devem aparecer uma única vez são inseridos como atributo direto, enquanto
+registros de ocorrência múltipla são adicionados a uma lista.
+
+Aqui também são feitos alguns tratamentos de erro que ajudam a assegurar a
+qualidade do processamento das EFD ICMS IPI:
+\begin{itemize}
+    \item Caso um registro de cardinalidade unitária apareça mais de uma vez no
+    mesmo contexto, o processamento é interrompido com uma sinalização de erro.
+    \item Há também uma tolerância com variações entre o número de campos
+    encontrados e os extraídos:
+    \begin{itemize}
+        \item Ela se deve ao fato que versões antigas do leiaute fiscal
+        costumam conter menos campos em alguns registros, já que o leiaute
+        tende a evoluir para acomodar mais informações ao longo do tempo.
+        \item Portanto, registro com menos campos que o esperado tem um
+        preenchimento com valores vazios para campos faltantes.
+        \item Contudo, se o registro possuir mais campos que o esperado, o
+        processamento é abortado com indicação de inconformidade.
+    \end{itemize}
+\end{itemize}
+Esse tratamento de erros segue uma política de interrupção imediata: qualquer
+falha --- seja de cardinalidade, de número de campos, de grupo não mapeado, de
+ausência do registro terminal que marca o fim do arquivo ou falha interna --- é
+registrada em \textit{log} e propagada como exceção para o \textit{Worker},
+interrompendo o processamento do arquivo. Essa decisão de projeto privilegia a
+consistência dos dados em detrimento da tolerância a falhas, evitando que um
+arquivo malformado gere cargas parciais ou corrompidas no banco de dados
+relacional.
+Portanto, este módulo estabelece uma separação clara entre a lógica de análise
+sintática e a de inserção no banco de dados --- permitindo um pré-processamento
+do arquivo antes da carga ser realizada. Essa separação confere ao
+\textit{pipeline} alta coesão funcional e baixo acoplamento, o que melhora a
+manutenibilidade do sistema.
+
+\subsubsection{\textit{Loader}}
+Este módulo representa o segundo estágio da ingestão de dados do sistema, sendo
+responsável por orquestrar a inserção do formato hieráquico gerado no item
+anterior no banco de dados \textit{PostgreSQL}. A arquitetura aqui possui,
+além da dependência do JSON de metadados, que possui as informações utilizadas
+para inserção, também há a dependência de um módulo interno para extração dos
+dados para cada coluna de cada tabela presente nos metadados, que representa a
+nível de implementação a execução da \textit{origem} dos dados apresentado
+na Seção~\ref{sec:especificacao_regras}.
+
+Esse módulo utiliza de \textit{pattern matching}\footnote{Mecanismo de
+programação que verifica a correspondência de uma estrutura ou valor de dados
+com um padrão predefinido, acionando fluxos de código específicos sem a
+necessidade de estruturas condicionais explícitas.} sobre o campo
+\textit{origem} de cada item do campo \textit{colunas} do JSON de metadados,
+como visto no Quadro~\ref{qua:json_metadados}. Esse \textit{pattern matching}
+funciona como despachante para determinar qual a função de extração deve ser
+usada para preencher a coluna representada pelo item atual, como mostra a
+Figura~\ref{fig:dispatcher_extract}.
+\input{figuras/dispatcher_extract}
+\clearpage
+
+Ou seja, a origem declarada nos metadados da coluna determina em tempo de
+execução qual algoritmo de extração será aplicado, sem que seja necessário um
+dispêndio condicional explícito para cada coluna.
+
+Em relação ao processamento, ele começa com o registro 0000, que é a raiz do
+EFD ICMS IPI. A partir daqui, os registros são varridos via um algoritmo de
+descida recursiva de busca em profundidade (\textit{Depth-First Search}, DFS).
+
+Para dispersão das chaves primárias de cada pai para repasse aos seus filhos,
+o \textit{Loader} mantém uma pilha implícita, cujo o funcionamento no caso é
+exemplificado na Figura~\ref{fig:pilha}.
+\input{figuras/pilha}
+\clearpage
+
+Esse padrão assegura que, ao final da execução, todos os registros tenham sido
+inseridos na ordem correta, respeitando as dependências referenciais entre pais
+e filhos.
+
+Por fim, é válido mencionar que o tratamento de erros nesse módulo também segue
+a política de consistência dos dados em detrimento da tolerância à falha.
+Diversos erros são catalogados nessa fase, como: Ausência do registro 0000;
+Falta das informações necessárias para realização da extração dos dados;
+Uma das extrações de dados acaba falhando; etc. Cada um desses erros resulta
+numa falha de inserção que realiza \textit{rollback}\footnote{Mecanismo de
+controle de transações em banco de dados que reverte todas as operações
+executadas desde o início do bloco atual em caso de erro, restaurando a base ao
+seu estado anterior íntegro.} em todo o processo, evitando assim a existência
+de dados corrompidos na base.

@@ -1,0 +1,29 @@
+%Abstract%
+\section*{\centering{ABSTRACT}}
+\noindent The processing and auditing of Digital Fiscal Bookkeeping for ICMS
+and IPI (EFD ICMS IPI) documents face operational bottlenecks in both the
+public and private sectors. The hierarchical plain text structure of these
+files, the high volatility of legal SPED layouts, and the absence of an
+official machine-readable specification render traditional hard-coded
+systems inflexible and error-prone. To solve this problem, this study
+develops a dynamic, metadata-driven ingestion pipeline. The proposed
+architecture extracts business rules from tax documentation and structures
+them into JSON configuration files, decoupling data processing from the source
+code. The solution consists of an Orchestrator that distributes the workload
+into batches and manages the parallel execution of in-memory dynamic workers,
+which parse the textual hierarchy and perform structured persistence into a
+\textit{PostgreSQL} relational database. Empirical validation demonstrated
+zero information loss and preserved referential integrity through reverse
+reconstruction tests of the original data. The solution also showed high
+resilience in handling corrupted files and ensured database transaction
+atomicity. It is concluded that the metadata-driven approach provides high
+flexibility regarding changes in tax legislation, while the identified
+limitations offer substantial room for future development and tool expansions.
+
+\vspace{\baselineskip}
+
+\noindent {\bf Keywords:} EFD ICMS IPI.
+SPED. Data Engineering.
+Data Ingestion.
+Metadata-Driven Architecture.
+Relational Database.

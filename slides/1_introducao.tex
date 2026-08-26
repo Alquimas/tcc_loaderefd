@@ -1,0 +1,27 @@
+\section{Introdução}
+
+\begin{frame}{O SPED e a Escrituração Fiscal Digital de ICMS e IPI}
+\begin{itemize}
+    \item \textbf{O SPED:} É um sistema que busca modernizar a interação entre contribuintes e o fisco através da informatização das obrigações acessórias.
+    \item \textbf{O EFD ICMS IPI:} É de uso obrigatório para os contribuintes de ICMS e IPI e contém registros de apuração de impostos, documentos fiscais e outras informações de interesse.
+    \item \textbf{A urgência legal:} Prazo de 5 anos para auditorias antes que seja extinto o crédito tributário.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{O Desafio Técnico Existente}
+\textbf{Com isso:}
+\begin{itemize}
+    \item \textbf{Auditorias:} É de interesse do Fisco realizar auditorias sobre esses documentos em tempo hábil.
+    \item \textbf{Empecilhos:} Arquivos em texto plano hierárquico e atualizações constantes de leiaute pelo Fisco.
+    \item \textbf{O desafio gerado:} Alto custo de manutenção e quebra de sistemas com código engessado.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{A Nossa Proposta}
+\textbf{Portanto, nossa equipe definiu como objetivo geral:}
+\begin{itemize}
+    \item Desenvolver um \textit{pipeline} ETL dinâmico e orientado a metadados para EFD ICMS IPI.
+    \item Realizar a substituição de regras no código-fonte por contratos em formato \textbf{JSON}.
+    \item Viabilizar a ingestão escalável dos documentos, com um processamento resiliente e genérico, junto com armazenamento relacional preciso com uso do \textit{PostgreSQL}.
+\end{itemize}
+\end{frame}

@@ -1,0 +1,362 @@
+\section{APRESENTAÇÃO E ANÁLISE DOS RESULTADOS}
+\label{sec:apresentacao_analise_resultados}
+Este capítulo detalha os procedimentos usados para testar, validar e avaliar a
+qualidade do processo desenvolvido, contemplando desde os pontos fortes da
+abordagem, erros encontrados e o que pode ser melhorado.
+
+\subsection{Ambiente de execução e hardware utilizado}
+\label{sec:ambiente_execucao}
+Para a avaliação de desempenho, bem como a execução do \textit{pipeline} de
+processamento proposto neste trabalho, foi utilizado um ambiente virtualizado
+disponibilizado pela SEFAZ. A documentação desse ambiente tem por objetivo
+garantir reprodutibilidade do que será apresentado e fornecer uma base para
+análises futuras, especialmente no que tange ao paralelismo central da
+aplicação.
+
+Todos os processos do sistema foram executados em uma única máquina virtual
+hospedada sob um \textit{hypervisor} \textit{VMWare} com virtualização total.
+As especificações dos recursos alocados para esta instância encontram-se no
+Quadro~\ref{tab:specs_ambiente}.
+
+\input{quadros/ambiente_execucao}
+
+A infraestrutura provisionada apresenta características altamente favoráveis
+para o perfil de carga de trabalho do sistema desenvolvido. Destaca-se
+principalmente a topologia de processamento disponibilizada: a alocação de 16
+processadores lógicos concentrados em um único nó NUMA, garantindo um tempo de
+acesso uniforme à memória RAM. Na prática, isso permitiu com que o Orquestrador
+instanciasse até 16 \textit{Workers}, saturando a capacidade
+de processamento paralelo, sem sofrer degradação devido a penalidades de
+troca de contexto. O banco de dados utilizado para testes foi instanciado
+na mesma máquina virtual, o que manteve os testes isolados de
+eventuais flutuações relacionadas à latência de rede. 
+
+\subsection{Metodologia de testes}
+\label{sec:testes}
+A validação do \textit{pipeline} de ingestão desenvolvido foi conduzido por
+meio testes experimentais de caráter preliminar, em grande parte de natureza
+\textit{ad-hoc}. Devido a restrições de tempo, experiência da equipe e escopo
+do projeto, não foi possível a realização de uma bateria de testes ou de uma
+coleta de dados em situação de estresse em ambiente de produção real.
+
+Contudo, cumpre destacar que os cenários selecionados para os testes
+\textit{ad-hoc} foram projetados estrategicamente para cobrir fluxos críticos
+de execução do sistema, servindo como uma validação da arquitetura
+proposta. Para tanto, a massa de dados de teste consistiu em 100 arquivos
+EFD ICMS IPI reais, número este que foi escolhido pela equipe por ser
+considerado um número representativo, mas não houve nenhuma avaliação da
+eficácia real dessa escolha. Também foram usados diversos arquivos
+EFD ICMS IPI gerados artificialmente, buscando cobrir as seguintes
+especificações:
+\begin{itemize}
+    \item Arquivos contendo uma unidade de cada um dos registros mapeados;
+    \item Arquivos com ausência de registros que foram normalizados;
+    \item Arquivos cobrindo os diversos casos de um-para-vários;
+    \item Arquivos com registros contendo menos campos que o total mapeado;
+    \item Arquivos contendo casos de um-para-vários onde se espera um-para-um;
+    \item Arquivos sem a presença do registro 0000;
+    \item Arquivos com campos que quebram as regras de formatação especificada;
+    \item Arquivos com campos que não quebram as regras de formatação, mas não
+    conseguem ser inseridos por limitações técnicas. Ex: Campos numéricos que
+    causam \textit{overflow};
+    \item Arquivos com registros contendo mais campos que o total esperado;
+\end{itemize}
+Esta composição visou cobrir possíveis lacunas e anomalias que
+os documentos reais pudessem deixar de apresentar.
+
+Uma das estratégias adotadas para maximizar a eficácia dos testes
+\textit{ad-hoc} concentrou-se na verificação da integridade absoluta da
+informação trafegada ao longo do \textit{pipeline}. Empregou-se uma idéia
+semelhante a técnica de \textit{round-trip validation}, que consiste na
+validação dos dados mediante a reconstrução reversa da informação original a
+partir dos registros já processados. Apesar da equipe não construir um
+processo totalmente automatizado e rico como o esperado pelo método
+\textit{round-trip validation}, ainda foi possível verificar a premissa central
+de que, se o sistema é capaz de desestruturar, transformar e persistir os dados
+corretamente, deve ser igualmente capaz de remontá-los em seu formato bruto
+original, sem qualquer depreciação. O procedimento foi dividido em duas etapas
+de verificação isoladas, valendo-se de análises diferenciais de texto:
+
+\begin{enumerate}
+    \item \textbf{Validação em Memória (\textit{Parser}):} O arquivo
+    EFD ICMS IPI original foi processado em memória e convertido para o formato
+    estruturado em JSON. Em seguida, aplicou-se uma rotina de engenharia
+    reversa para reconverter esse JSON de volta para o formato de texto plano
+    original. Além disso, o arquivo EFD ICMS IPI original foi normalizado para
+    evitar divergências devido à representações equivalentes, como costuma
+    ocorrer entre campos numéricos. A comparação entre o arquivo de origem e o
+    gerado a partir do JSON atestou a precisão da modelagem estrutural
+    em árvore;
+    \item \textbf{Validação de Persistência (\textit{Loader}):} Para homologar
+    a carga no banco de dados, o ciclo de ingestão foi concluído com a inserção
+    dos registros no \textit{PostgreSQL}. Posteriormente, utilizando
+    exclusivamente as chaves primárias para rastrear os relacionamentos
+    hierárquicos entre as tabelas, os registros foram consultados, extraídos
+    e remontados de volta, no formato original, seguindo o mesmo processo do
+    caso anterior a partir daqui.
+\end{enumerate}
+
+Em ambos os cenários de teste, a verificação diferencial linha a linha confirmou
+a exatidão do processo. A ausência de discrepâncias relevantes provou
+empiricamente que o sistema cumpre o requisito de extração e transformação,
+sem incorrer em perdas de informação, truncamento de valores, ou corrupção na
+hierarquia de dependência dos registros fiscais.
+
+Outra abordagem consistiu na elaboração de documentos contendo as falhas de
+construção pré-determinadas listadas anteriormente, inserindo-os nos lotes de
+processamento para avaliação de comportamento. Este ensaio buscou aferir a
+resiliência do sistema no tratamento de arquivos defeituosos e avaliar a
+capacidade de rastreabilidade dos erros, permitindo diagnosticar se a falha
+advém do arquivo, de equívocos nos metadados ou da lógica de código.
+
+Neste cenário, os resultados mostraram-se satisfatórios. Os \textit{logs}
+gerados apresentaram um nível adequado de detalhamento
+(Listagem~\ref{qua:log_parsing_incorreto}). A identificação explícita do erro,
+associada ao nome do arquivo, viabiliza a averiguação direta da anomalia.
+Adicionalmente, constatou-se que a ocorrência não comprometeu o
+\textit{pipeline}, o qual prosseguiu sua execução, sem sofrer interrupções
+globais. Este comportamento atesta empiricamente que o sistema isola arquivos
+defeituosos, otimizando a utilização dos recursos alocados para o
+respectivo lote.
+
+\input{quadros/log_parsing_incorreto}
+
+A estratégia final compreendeu a injeção de erros artificiais durante a execução
+do \textit{pipeline}, especificamente durante a execução do componente
+\textit{Loader}. Os erros considerados foram:
+\begin{itemize}
+    \item Falha de conexão com o \textit{PostgreSQL};
+    \item Inconformidade entre o dado a ser inserido e o tipo esperado;
+    \item Datas inválidas.
+\end{itemize}
+Tais erros foram atrelados apenas ao processamento de determinados arquivos,
+com o objetivo de validar a atomicidade da carga diante de falhas no meio do
+processo e verificar a precisão do registro do erro.
+
+Neste caso, os resultados também foram positivos. Conforme os \textit{logs}
+(Listing~\ref{qua:log_loading_incorreto}), a nomeação padronizada da falha e do
+arquivo proporcionou boa rastreabilidade. Validou-se que todos os demais
+arquivos do lote atravessaram o fluxo de carga com sucesso, enquanto o arquivo
+defeituoso não produziu qualquer efeito no banco de dados. Isso comprova que o
+sistema mantém a atomicidade das operações, revertendo inserções parciais
+por meio de \textit{rollback} quando anomalias interrompem o fluxo.
+
+\input{quadros/log_loading_incorreto}
+Portanto, conclui-se que a avaliação do sistema atendeu com êxito a três
+critérios fundamentais:
+\begin{enumerate}
+    \item \textbf{Consistência do componente \textit{Parser}:} Verificação de
+    que a árvore de registros gerada em memória refletiu com fidelidade a
+    hierarquia descrita na especificação fiscal, abrangendo as particularidades
+    estruturais e processando todos os dados;
+    \item \textbf{Aderência aos Metadados:} Validação da capacidade de
+    interpretar dinamicamente o arquivo JSON de regras, assegurando sua
+    aplicação, isolando arquivos não conformes e alternando entre os modos
+    de inserção adequados;
+    \item \textbf{Atomicidade da Carga:} Confirmação de que o componente
+    \textit{Loader} realizou a persistência normalizada de maneira íntegra,
+    respeitando as restrições de integridade referencial e executando
+    \textit{rollback} imediato em caso de falhas, protegendo o SGBD contra
+    dados corrompidos.
+\end{enumerate}
+
+Embora os dados coletados não permitam traçar curvas generalizáveis de
+escalabilidade linear sob concorrência extrema de \textit{Workers}, os
+resultados obtidos atestam a viabilidade técnica da solução e a corretude
+lógica de todos os módulos da arquitetura.
+
+\subsection{Limitações encontradas após a modelagem}
+\label{sec:limitacoes}
+
+As subseções a seguir detalham gargalos e desafios arquiteturais identificados
+após a modelagem e durante as etapas de execução do \textit{pipeline}.
+
+\subsubsection{Limitações do Tipo JSONB com Grandes Volumes}
+\label{sec:json_grande}
+Após a conclusão dos ensaios preliminares, o sistema foi avaliado em um
+ambiente de homologação controlado, visando observar seu comportamento
+perante um volume de dados maior e mais condizente com cenários reais.
+Um dos imprevistos ocorridos esteve diretamente relacionado às restrições
+físicas de armazenamento do SGBD \textit{PostgreSQL} no tratamento de
+arquivos EFD ICMS IPI de grande escala. 
+
+O projeto original previa que, em paralelo à carga relacional normalizada, o
+\textit{Worker} realizaria a conversão do arquivo completo para o
+formato JSON bruto (\textit{raw data}) para persistência em uma única
+coluna do tipo \texttt{JSONB}. Contudo, ao submeter arquivos de
+volumetria massiva (centenas de milhares de registros), o SGBD disparou
+erros de estouro de limite físico, interrompendo as transações. Esses
+arquivos chegaram a ocasionar falhas no próprio \textit{pool}\footnote{Conjunto
+de conexões ativas e reutilizáveis mantido em memória pelo sistema, evitando
+o custo computacional de abrir e fechar novas conexões com o banco a cada
+operação.} de conexões com o banco, resultando no cancelamento da inserção de
+lotes inteiros, mesmo com a configuração de \textit{retries}\footnote{Estratégia
+de resiliência que agenda a reexecução automática da criação de uma conexão com
+o banco de dados antes de declará-lo definitivamente fora de alcance.}
+habilitada.
+
+Essa falha decorre dos limites estáticos impostos pelo \textit{PostgreSQL}
+para a alocação de objetos JSONB. O erro mais recorrente foi a violação
+do limite de 256 MB para campos únicos, embora também tenham sido registradas
+instâncias de estouro do limite máximo de 1 GB estipulado pelo SGBD.
+
+Para mitigar essa limitação, determinou-se que a inserção de arquivos brutos
+monolíticos deve ser evitada em casos de alta volumetria. Incorporou-se uma
+cláusula de verificação que estima o tamanho do JSON gerado antes da operação
+de E/S --- Sigla para \textit{Entrada e Saída}, que representa operações que
+acessam recursos externos ao programa, como o SGBD. Caso a estimativa ultrapasse
+o limite configurado, a persistência no campo JSONB é suprimida,
+garantindo que o processamento normalizado avance sem interrupções. 
+
+A descoberta deste gargalo evidenciou que a persistência de superobjetos
+estruturados em SGBDs relacionais representa um anti-padrão de engenharia
+para lidar com volumes característicos de \textit{Big Data}\footnote{Termo que
+descreve conjuntos de dados massivos, complexos e de rápido crescimento, cuja
+escala e variedade ultrapassam a capacidade de armazenamento, gestão e
+processamento de SGBDs relacionais convencionais.}, gerando
+conhecimento valioso para a evolução arquitetural da ferramenta e
+do modelo de dados utilizado pela equipe.
+
+\subsubsection{Degradação da inserção}
+\label{sec:degradacao_insercao}
+Durante a validação do componente \textit{Loader} com arquivos EFD ICMS IPI
+massivos, observou-se uma degradação não linear no tempo total de persistência.
+Embora a ingestão de dados em tempo real não figure entre
+os requisitos não funcionais deste trabalho, a análise dessa latência apontou
+para um gargalo intrínseco à sistemas de ingestão de dados massivos.
+
+A primeira hipótese para a raiz do comportamento foi a dependência estrutural
+de chaves primárias artificiais geradas sequencialmente pelo
+\textit{PostgreSQL}. Devido à natureza hierárquica da obrigação fiscal, a
+persistência exige a inserção prévia do registro-pai para obtenção de seu
+identificador único gerado pelo banco. Somente após receber este valor, o
+componente \textit{Loader} é capaz de propagá-lo como chave estrangeira
+aos registros-filhos.
+
+Contudo, as investigações demonstraram que a degradação de desempenho observada
+não decorre unicamente dessa dependência. Uma remodelagem experimental
+eliminando a necessidade de consultas prévias de identificadores foi
+implementada e testada, porém o comportamento de perda progressiva de vazão
+persistiu de forma análoga.
+
+A análise empírica refinada nos levou a concluir que a verdadeira causa
+raiz reside na sobrecarga imposta ao motor de persistência do
+\textit{PostgreSQL}, durante a inserção de volumes massivos sob um único bloco
+transacional. À medida que milhões de registros hierárquicos são injetados
+continuamente, o banco de dados é forçado a manter em tempo real a consistência
+das restrições referenciais e a integridade de múltiplos índices estruturados.
+Esse processo de atualização dinâmica satura os recursos de E/S e degrada o
+tempo de execução de forma não-linear, conforme o volume do documento cresce.
+
+A desativação momentânea das restrições de consistência para
+a realização da carga atestou o ganho de desempenho, diminuindo
+consideravelmente o tempo necessário para a execução total da carga. Contudo,
+a resolução definitiva deste gargalo não pode contemplar apenas essa escolha,
+e exige estratégia de ingestão de
+alta complexidade, envolvendo uma modelagem dedicada do funcionamento do
+\textit{PostgreSQL} para ingestão massiva de dados em único bloco transacional.
+Diante dessa complexidade, e do fato de que a abordagem atual atende
+satisfatoriamente aos requisitos de negócio, para a grande maioria dos
+cenários, a implementação de um novo modelo de persistência otimizado foi
+deliberadamente isolada do escopo atual, configurando-se como uma oportunidade
+promissora para trabalhos futuros.
+
+\subsubsection{Documentação conflitante}
+\label{sec:documentacao_conflitante}
+Durante as homologações, observou-se uma ocorrência errônea em relação à
+base normativa. O registro \texttt{H020}, hierarquicamente subordinado ao
+registro \texttt{H010}, encontra-se categorizado com multiplicidade
+um-para-um no Guia Prático~\cite{guia_pratico_efd} oficial da EFD. Não obstante,
+uma parcela ínfima dos arquivos analisados possuía
+múltiplos registros \texttt{H020} para um mesmo \texttt{H010}.
+
+Após averiguação, constatou-se que a Nota Técnica~\cite{nota_tecnica_efd}
+correspondente indicava tal relacionamento como um-para-vários. Para mitigar o
+impasse normativo e garantir maior flexibilidade à extração, assumiu-se a
+especificidade da Nota Técnica~\cite{nota_tecnica_efd} como a diretriz válida
+para os metadados do sistema. Este evento evidencia que as especificações
+oficiais emitidas pelo fisco são suscetíveis a divergências internas, exigindo
+processos contínuos de governança de dados e adaptação dinâmica das regras de
+negócio.
+
+\subsection{Métricas Operacionais Preliminares e Linha de Base}
+\label{sec:numeros_hell_yeah}
+
+Embora o escopo central deste trabalho resida na validação da arquitetura
+proposta quanto a consistência dos dados inseridos e do uso adequado das regras
+em JSON, o monitoramento das execuções no ambiente de homologação controlado
+permitiu a coleta empírica de métricas operacionais que estabelecem
+uma linha de base para trabalhos futuros.
+Os ensaios registraram o tempo bruto de execução do \textit{pipeline}
+em relação ao volume total de arquivos submetidos, englobando as
+fases de orquestração, transformação estrutural e
+carga no banco de dados.
+
+A Tabela~\ref{tab:tempo_execucao} consolida os resultados quantitativos
+extraídos do ambiente de homologação, considerando um Orquestrador trabalhando
+com \( 8 \) \textit{Workers} simultâneos. Esse valor foi escolhido por consumir
+cerca da metade do poder de processamento do ambiente disponibilizado,
+garantindo que flutuações de desempenho causadas por outras atividades sendo
+executadas fosse minimizado.
+A Tabela~\ref{tab:estatisticas} reúne resultados estatísticos acerca dos
+\textit{Workers} executados, cada um imbuído de processar
+\( 100 \) arquivos EFD ICMS. O número \( 100 \) foi escolhido ao acaso e,
+apesar de constituir um vetor de exploração interessante para a métrica de
+desempenho, não foram realizados testes com outros valores.
+\input{tabelas/tempo_execucao}
+
+\input{tabelas/estatisticas}
+
+Destaca-se que não foram aplicados comparativos diretos com ferramentas
+comerciais de mercado. Isso se deve ao fato da literatura carecer de
+referenciais abertos semelhantes ao explorado no presente trabalho.
+
+Ademais, o monitoramento ativo dos lotes forneceu um panorama sobre a
+integridade da base de dados fornecida. De um total de \( 637.361 \) arquivos
+submetidos ao \textit{pipeline}, o sistema diagnosticou e isolou \( 15 \)
+arquivos contendo anomalias estruturais ou normativas
+(aproximadamente \(0{,}002\)\% da amostra), dentre essas nenhuma envolvendo
+a especificação em JSON criada. Este índice quantifica a suscetibilidade a
+erros inerente às obrigações fiscais e justifica, na prática, o esforço
+arquitetural investido nos mecanismos de resiliência, isolamento de
+falhas e rastreabilidade discutidos nas seções anteriores.
+
+Junto a isso, a alta variação entre o tempo de execução de cada \textit{Worker},
+ chegando a duração de 119 minutos no pior caso total, exemplifica o que foi
+ exibido na Seção~\ref{sec:degradacao_insercao}, onde foi comentado como
+ determinados \textit{Workers} sofrem degradação no tempo de execução devido a
+ arquivos massivos. Ainda assim, é válido ressaltar que ao longo dos três lotes executados, cerca de \( 90\% \) dos \textit{Workers} (\( 88\% \) nos lotes 1
+ e 2, \( 93\% \) no lote 3) permaneceu a menos de um desvio padrão em torno da
+ média aritmética, \textit{i.e.}, cerca de \( 90\% \) dos \textit{Workers}
+ demora não mais que 20 minutos para executar todo seu \textit{pipeline}, o
+ que denota uma boa estabilidade operacional, salvo os casos onde foi
+ evidenciado a degradação do tempo de execução. O \textit{boxplot} exibido na
+ Figura~\ref{fig:boxplot_tempos_1} permite uma visualização melhor do
+ comportamento do tempo do execução do \textit{pipeline} em relação ao
+ tempo de execução de cada {Worker}, destacando em cada um deles, os
+ \( 5 \) \textit{Workers} com maior tempo de execução.
+
+\subsection{Síntese dos Resultados}
+\label{sec:discussao_final}
+
+Os ensaios experimentais conduzidos demonstraram que a adoção de uma
+arquitetura orientada a metadados e estruturada em arquivos JSON é
+tecnicamente viável e altamente íntegro para o processamento de obrigações
+fiscais complexas, como a EFD ICMS IPI. A bateria de testes, mesmo com sua
+implementação embrionária, atestou a corretude e a precisão do algoritmo de
+conversão, provando a ausência de perdas informacionais durante o fluxo de
+desestruturação e carga.
+
+Simultaneamente, a implementação revelou gargalos inerentes à modelagem
+relacional de grandes volumes, notadamente as limitações de paginação do tipo
+\texttt{JSONB} e a latência de operações de E/S em inserções hierárquicas
+massivas. Tais descobertas, no entanto, não invalidam a ferramenta,
+pelo contrário, balizaram decisões arquiteturais de mitigação e evidenciaram
+que o sistema lida com anomalias físicas e lógicas de forma isolada, resiliente
+e rastreável. De modo geral, o \textit{pipeline} cumpriu o propósito
+de transformar arquivos textuais não estruturados em uma base de dados
+relacional íntegra, estabelecendo uma fundação sólida para a construção
+de sistemas de auditoria fiscais.
+
+\input{figuras/boxplot_tempos}
+\clearpage

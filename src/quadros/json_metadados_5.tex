@@ -1,0 +1,64 @@
+\begin{quadro}[H]
+    \centering
+    \begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+        ...
+        {
+            "nome_coluna": "vl_tot_ded",
+            "tipo_dado": "numeric(15, 2)",
+            "origem": "efd",
+            "registro": {
+                "caminho": "e110",
+                "nome_campo": "vl_tot_ded"
+            }
+        },
+        {
+            "nome_coluna": "vl_icms_recolher",
+            "tipo_dado": "numeric(15, 2)",
+            "origem": "efd",
+            "registro": {
+                "caminho": "e110",
+                "nome_campo": "vl_icms_recolher"
+            }
+        },
+        {
+            "nome_coluna": "vl_sld_credor_transportar",
+            "tipo_dado": "numeric(15, 2)",
+            "origem": "efd",
+            "registro": {
+                "caminho": "e110",
+                "nome_campo": "vl_sld_credor_transportar"
+            }
+        },
+        {
+            "nome_coluna": "deb_esp",
+            "tipo_dado": "numeric(15, 2)",
+            "origem": "efd",
+            "registro": {
+                "caminho": "e110",
+                "nome_campo": "deb_esp"
+            }
+        },
+        {
+            "nome_coluna": "sq_apuracao_icms",
+            "tipo_dado": "serial4",
+            "origem": "serial"
+        },
+        {
+            "nome_coluna": "sqn_efd",
+            "tipo_dado": "int4",
+            "origem": "registro_pai",
+            "tabela_origem": "cad_efd"
+        }
+    ],
+    "chave_primaria": [
+        "sq_apuracao_icms"
+    ],
+    "filhos": [
+        "cad_icms_ajuste"
+    ]
+}
+    \end{lstlisting}
+
+    \vspace{0.2cm}
+    \small{Fonte: Elaborado pelo autor (2026).}
+\end{quadro}

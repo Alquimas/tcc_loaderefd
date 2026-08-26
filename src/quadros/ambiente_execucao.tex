@@ -1,0 +1,22 @@
+\begin{quadro}[hbt!]
+    \centering
+    \caption{Especificações do ambiente computacional}
+    \label{tab:specs_ambiente}
+    \begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+        \toprule
+        \textbf{Componente} & \textbf{Especificação Técnica} \\
+        \midrule
+        \textbf{Infraestrutura} & Máquina Virtual sob \textit{hypervisor} VMware (\textit{virtualização total}) \\
+        \textbf{Processador} & Intel\textsuperscript{\tiny\textregistered} Xeon\textsuperscript{\tiny\textregistered} Gold 5320 @ 2.20GHz \\
+        \textbf{Topologia da CPU} & 16 núcleos lógicos (16 \textit{sockets}, 1 \textit{core/socket}, 1 \textit{thread/core}) \\
+        \textbf{Cache} & L1: 80 KB / L2: 1,25 MB / L3: 39,9 MB (Compartilhado) \\
+        \textbf{Memória RAM} & 93Gi, com 4Gi de swap \\
+        \textbf{Armazenamento (Raiz do sistema) } & SSD de 135GB \\
+        \textbf{Armazenamento (Volume dedicado ao banco de dados) } & SSD de 36TB \\
+        \textbf{Versão do \textit{PostgreSQL}} & 16 \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.2cm}
+    \small{Fonte: Elaborado pelo autor (2026).}
+\end{quadro}

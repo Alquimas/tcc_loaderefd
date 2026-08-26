@@ -1,0 +1,35 @@
+\begin{quadro}[H]
+    \centering
+    \caption{Exemplo de modelo JSON de regras de metadados para a EFD ICMS IPI}
+    \label{qua:json_metadados}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, frame=single]
+{
+    "nome_tabela": "cad_apuracao_icms",
+    "registro_principal": "e001.e100",
+    "is_master": false,
+    "registros": [
+        {
+            "caminho": "",
+            "ocorrencia": "n",
+            "campos": [
+                {
+                    "nome_campo": "dt_ini",
+                    "tipo_dado": "date"
+                },
+                {
+                    "nome_campo": "dt_fin",
+                    "tipo_dado": "date"
+                }
+            ]
+        },
+        {
+            "caminho": "e110",
+            "ocorrencia": "1",
+            "campos": [
+                {
+                    "nome_campo": "vl_tot_debitos",
+                    "tipo_dado": "numeric(15, 2)"
+                },
+        ...
+\end{lstlisting}
+\end{quadro}

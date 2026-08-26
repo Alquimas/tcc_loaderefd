@@ -1,0 +1,127 @@
+\begin{figure}[htb]
+    \centering
+    \caption{Distribuição dos tempos de processamento dos \textit{Workers} em minutos em cada instância de execução.}
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=0.75\textwidth,
+            height=5cm,
+            xlabel style={
+                at={(0.5, 1.05)},
+                anchor=south
+            },
+            xlabel={Tempo de Execução da Instância 1 (em minutos)},
+            xmajorgrids,
+            ytick=\empty,
+            tick label style={font=\footnotesize},
+            scaled x ticks=false,
+            xmin=-5, xmax=130,
+            xtick={0, 20, 40, 60, 80, 100, 120}
+        ]
+
+        \addplot+[
+            boxplot prepared={
+                draw direction=x,
+                draw position=1,
+                lower whisker=0.500,
+                lower quartile=2.157,
+                median=3.735,
+                upper quartile=6.843,
+                upper whisker=13.856
+            },
+        ]
+        coordinates{
+            (1,30.198)
+            (1,34.023)
+            (1,43.030)
+            (1,55.625)
+            (1,56.909)
+        };
+
+        \end{axis}
+    \end{tikzpicture}
+
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=0.75\textwidth,
+            height=5cm,
+            xlabel style={
+                at={(0.5, 1.05)},
+                anchor=south
+            },
+            xlabel={Tempo de Execução da Instância 2 (em minutos)},
+            xmajorgrids,
+            ytick=\empty,
+            tick label
+            style={font=\footnotesize},
+            scaled x ticks=false,
+            xmin=-5, xmax=130,
+            xtick={0, 20, 40, 60, 80, 100, 120}
+        ]
+
+        \addplot+[
+            boxplot prepared={
+                draw direction=x,
+                draw position=1,
+                lower whisker=0.484,
+                lower quartile=2.824,
+                median=4.700,
+                upper quartile=8.778,
+                upper whisker=17.648
+            },
+        ]
+        coordinates{
+            (1,42.832)
+            (1,48.263)
+            (1,50.877)
+            (1,51.802)
+            (1,76.815)
+        };
+
+        \end{axis}
+    \end{tikzpicture}
+
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=0.75\textwidth,
+            height=5cm,
+            xlabel style={
+                at={(0.5, 1.05)},
+                anchor=south
+            },
+            xlabel={Tempo de Execução da Instância 3 (em minutos)},
+            xmajorgrids,
+            ytick=\empty,
+            tick label
+            style={font=\footnotesize},
+            scaled x ticks=false,
+            xmin=-5, xmax=130,
+            xtick={0, 20, 40, 60, 80, 100, 120}
+        ]
+
+        \addplot+[
+            boxplot prepared={
+                draw direction=x,
+                draw position=1,
+                lower whisker=0.699,
+                lower quartile=3.236,
+                median=5.470,
+                upper quartile=10.461,
+                upper whisker=21.183
+            },
+        ]
+        coordinates{
+            (1,81.825)
+            (1,94.230)
+            (1,108.417)
+            (1,114.311)
+            (1,119.596)
+        };
+
+        \end{axis}
+    \end{tikzpicture}
+
+    \small{Fonte: Elaborado pelo autor (2026).}
+    \label{fig:boxplot_tempos_1}
+\end{figure}

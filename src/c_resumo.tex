@@ -1,0 +1,33 @@
+\section*{\centering{RESUMO}}
+\noindent O processamento e a auditoria de documentos da Escrituração Fiscal
+Digital de ICMS e IPI (EFD ICMS IPI) enfrentam gargalos operacionais no setor
+público e privado. A estrutura em texto plano hierárquico desses arquivos, a
+alta volatilidade dos leiautes
+legais do SPED e a ausência de uma especificação oficial legível por máquina
+tornam os sistemas tradicionais baseados em código fixo inflexíveis e
+propensos a falhas. Para solucionar esse problema, o presente
+trabalho desenvolve um \textit{pipeline} de ingestão dinâmico e orientado 
+metadados.
+A arquitetura elaborada extrai as regras de negócio da documentação fiscal e
+as
+estrutura em arquivos de configuração JSON, desacoplando o processamento
+do código-fonte. A solução é composta por um Orquestrador que distribui
+a carga de trabalho em lotes e gerencia a execução paralela de trabalhadores
+dinâmicos em memória, responsáveis por interpretar a hierarquia do texto e
+realizar a persistência estruturada em um banco de dados relacional
+\textit{PostgreSQL}. A validação empírica atestou zero perda informacional
+e a manutenção da integridade referencial por meio do teste de reconstrução
+reversa dos dados originais. A solução também demonstrou alta resiliência
+no tratamento de arquivos corrompidos e garantiu a atomicidade das operações
+no banco. Conclui-se que a abordagem por metadados confere alta flexibilidade
+às mudanças da legislação tributária, e as limitações encontradas oferecem
+largo espaço para desenvolvimento e expansões futuras da ferramenta.
+
+\vspace{\baselineskip}
+
+\noindent {\bf Palavras-chave:} EFD ICMS IPI.
+SPED.
+Engenharia de Dados.
+Ingestão de Dados.
+Arquitetura Orientada a Metadados.
+Banco de Dados Relacional.

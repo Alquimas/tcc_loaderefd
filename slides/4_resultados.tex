@@ -1,0 +1,40 @@
+\section{Resultados e Análises}
+
+\begin{frame}{Ambiente de execução}
+    \centering
+\input{quadros/ambiente_execucao}
+    \vspace{0.2cm}
+    \small{Fonte: Elaborado pelo autor (2026).}
+\end{frame}
+
+\begin{frame}{Testes e Validação}
+    \textbf{Foi seguida uma metodologia preliminar baseada em \textit{round-trip} para testar a integridade:}
+\input{figuras/roundtrip}
+\end{frame}
+
+\begin{frame}{Testes e Validação}
+    \textbf{Já para verificar a qualidade do tratamento de erros:}
+    \begin{itemize}
+        \item Geração de arquivos com falhas pré-determinadas.
+        \item Injeção de erros durante o processamento.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Métricas Operacionais}
+    \textbf{Nos testes em ambiente de homologação, obtemos:}
+    \begin{itemize}
+        \item \textbf{Volume Processado}: 637.361 arquivos.
+        \item \textbf{Anomalias Isoladas}: 15 arquivos.
+        \item \textbf{Desempenho Unitário}: Cerca de 90\% dos \textit{Workers} processam um lote de 100 arquivos em menos de 20 minutos.
+        \item \textbf{Outliers}: Algumas instâncias de {Workers} demoraram até 2 horas para finalizar.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Descobertas e Limitações}
+    \textbf{Os testes em homologação revelaram algumas limitações:}
+    \begin{itemize}
+        \item \textbf{Limite físico do \textit{PostgreSQL}:} Limite de 256MB para campos únicos de um JSONB.
+        \item \textbf{Degradação de E/S:} Queda de vazão em inserções massivas sob transação única devido ao motor de consistência do \textit{SGBD}.
+        \item \textbf{Conflitos Normativos:} Divergências entre o Guia Prático e a Nota Técnica para o registro H020.
+    \end{itemize}
+\end{frame}
